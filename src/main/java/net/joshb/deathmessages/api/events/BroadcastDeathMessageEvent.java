@@ -11,9 +11,8 @@ import org.bukkit.event.HandlerList;
 
 import java.util.List;
 
-
 public class BroadcastDeathMessageEvent extends Event implements Cancellable {
-
+    private static final HandlerList HANDLERS = new HandlerList();
     private final Player player;
     private final LivingEntity livingEntity;
     private final MessageType messageType;
@@ -22,10 +21,7 @@ public class BroadcastDeathMessageEvent extends Event implements Cancellable {
     private final List<World> broadcastedWorlds;
     private boolean isCancelled;
 
-    private static final HandlerList HANDLERS = new HandlerList();
-
-    public BroadcastDeathMessageEvent(Player player, LivingEntity livingEntity, MessageType messageType, TextComponent textComponent,
-                                      List<World> broadcastedWorlds, boolean isGangDeath) {
+    public BroadcastDeathMessageEvent(Player player, LivingEntity livingEntity, MessageType messageType, TextComponent textComponent, List<World> broadcastedWorlds, boolean isGangDeath) {
         this.player = player;
         this.livingEntity = livingEntity;
         this.messageType = messageType;
@@ -33,6 +29,10 @@ public class BroadcastDeathMessageEvent extends Event implements Cancellable {
         this.isGangDeath = isGangDeath;
         this.broadcastedWorlds = broadcastedWorlds;
         this.isCancelled = false;
+    }
+
+    public static HandlerList getHandlerList() {
+        return HANDLERS;
     }
 
     @Override
@@ -50,29 +50,27 @@ public class BroadcastDeathMessageEvent extends Event implements Cancellable {
         this.isCancelled = isCancelled;
     }
 
-    public static HandlerList getHandlerList() {
-        return HANDLERS;
-    }
-
     public Player getPlayer() {
         return this.player;
     }
 
-    public LivingEntity getLivingEntity(){
+    public LivingEntity getLivingEntity() {
         return this.livingEntity;
     }
 
-    public MessageType getMessageType(){ return this.messageType; }
+    public MessageType getMessageType() {
+        return this.messageType;
+    }
 
     public TextComponent getTextComponent() {
         return this.textComponent;
     }
 
-    public boolean isGangDeath(){
+    public boolean isGangDeath() {
         return this.isGangDeath;
     }
 
-    public List<World> getBroadcastedWorlds(){
+    public List<World> getBroadcastedWorlds() {
         return this.broadcastedWorlds;
     }
 }

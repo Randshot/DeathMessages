@@ -12,12 +12,11 @@ import java.util.UUID;
 
 public class ExplosionManager {
 
+    public static List<ExplosionManager> explosions = new ArrayList<>();
     private final UUID pyro;
     private final Material material;
-    private Location location;
     private final List<UUID> effected;
-
-    public static List<ExplosionManager> explosions = new ArrayList<>();
+    private Location location;
 
     public ExplosionManager(UUID pyro, Material material, Location location, List<UUID> effected) {
         this.pyro = pyro;
@@ -28,12 +27,36 @@ public class ExplosionManager {
         explosions.add(this);
         //Destroys class. Wont need the info anymore
 
-        new BukkitRunnable(){
+        new BukkitRunnable() {
             @Override
             public void run() {
                 destroy();
             }
         }.runTaskLater(DeathMessages.plugin, 5 * 20);
+    }
+
+    public static ExplosionManager getExplosion(UUID pyro) {
+        for (ExplosionManager ex : explosions) {
+            if (ex.getPyro().equals(pyro))
+                return ex;
+        }
+        return null;
+    }
+
+    public static ExplosionManager getExplosion(Location location) {
+        for (ExplosionManager ex : explosions) {
+            if (ex.getLocation().equals(location))
+                return ex;
+        }
+        return null;
+    }
+
+    public static ExplosionManager getManagerIfEffected(Player p) {
+        for (ExplosionManager ex : explosions) {
+            if (ex.getEffected().contains(p.getUniqueId()))
+                return ex;
+        }
+        return null;
     }
 
     public UUID getPyro() {
@@ -44,12 +67,12 @@ public class ExplosionManager {
         return this.material;
     }
 
-    public void setLocation(Location location){
-        this.location = location;
-    }
-
     public Location getLocation() {
         return this.location;
+    }
+
+    public void setLocation(Location location) {
+        this.location = location;
     }
 
     public void addEffected(Player p) {
@@ -60,34 +83,7 @@ public class ExplosionManager {
         return this.effected;
     }
 
-    public static ExplosionManager getExplosion(UUID pyro) {
-        for (ExplosionManager ex : explosions) {
-            if (ex.getPyro().equals(pyro)) {
-                return ex;
-            }
-        }
-        return null;
-    }
-
-    public static ExplosionManager getExplosion(Location location) {
-        for (ExplosionManager ex : explosions) {
-            if (ex.getLocation().equals(location)) {
-                return ex;
-            }
-        }
-        return null;
-    }
-
-    public static ExplosionManager getManagerIfEffected(Player p) {
-        for (ExplosionManager ex : explosions) {
-            if (ex.getEffected().contains(p.getUniqueId())) {
-                return ex;
-            }
-        }
-        return null;
-    }
-
-    private void destroy(){
+    private void destroy() {
         explosions.remove(this);
     }
 }

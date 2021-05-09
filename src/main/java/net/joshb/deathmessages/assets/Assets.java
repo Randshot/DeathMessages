@@ -26,6 +26,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Level;
@@ -37,6 +38,8 @@ public class Assets {
     static boolean addPrefix = Settings.getInstance().getConfig().getBoolean("Add-Prefix-To-All-Messages");
 
     public static List<String> damageTypes = Arrays.asList(
+            "Bed",
+            "Respawn-Anchor",
             "Projectile-Arrow",
             "Projectile-Dragon-Fireball",
             "Projectile-Egg",
@@ -52,12 +55,16 @@ public class Assets {
             "Melee",
             "Suffocation",
             "Fall",
+            "Climbable",
             "Fire",
             "Fire-Tick",
             "Melting",
             "Lava",
             "Drowning",
             "Explosion",
+            "Tnt",
+            "Firework",
+            "End-Crystal",
             "Void",
             "Lightning",
             "Suicide",
@@ -73,6 +80,16 @@ public class Assets {
             "Cramming",
             "Dryout",
             "Unknown");
+
+    public static boolean isNumeric(String s) {
+        for (char c : s.toCharArray()) {
+            if (!Character.isDigit(c))
+                return false;
+        }
+        return true;
+    }
+
+    public static HashMap<String, String> addingMessage = new HashMap<>();
 
     public static String formatMessage(String path) {
         return colorize(Messages.getInstance().getConfig().getString(path)
@@ -661,6 +678,11 @@ public class Assets {
                 .replaceAll("%x%", String.valueOf(tameable.getLocation().getBlock().getX()))
                 .replaceAll("%y%", String.valueOf(tameable.getLocation().getBlock().getY()))
                 .replaceAll("%z%", String.valueOf(tameable.getLocation().getBlock().getZ())));
+        if (Constants.biomes.contains(tameable.getLocation().getBlock().getBiome().name())) {
+            msg = msg.replaceAll("%biome%", tameable.getLocation().getBlock().getBiome().name());
+        } else {
+            msg = msg.replaceAll("%biome%", "Unknown");
+        }
         if (DeathMessages.plugin.placeholderAPIEnabled) {
             msg = PlaceholderAPI.setPlaceholders(killer.getPlayer(), msg);
         }
@@ -672,12 +694,16 @@ public class Assets {
             msg = colorize(msg
                     .replaceAll("%player%", pm.getName())
                     .replaceAll("%player_display%", pm.getPlayer().getDisplayName())
-                    .replaceAll("%biome%", pm.getLastLocation().getBlock().getBiome().name())
                     .replaceAll("%world%", pm.getLastLocation().getWorld().getName())
                     .replaceAll("%world_environment%", getEnvironment(pm.getLastLocation().getWorld().getEnvironment()))
                     .replaceAll("%x%", String.valueOf(pm.getLastLocation().getBlock().getX()))
                     .replaceAll("%y%", String.valueOf(pm.getLastLocation().getBlock().getY()))
                     .replaceAll("%z%", String.valueOf(pm.getLastLocation().getBlock().getZ())));
+            if (Constants.biomes.contains(pm.getLastLocation().getBlock().getBiome().name())) {
+                msg = msg.replaceAll("%biome%", pm.getLastLocation().getBlock().getBiome().name());
+            } else {
+                msg = msg.replaceAll("%biome%", "Unknown");
+            }
             if (DeathMessages.plugin.placeholderAPIEnabled) {
                 msg = PlaceholderAPI.setPlaceholders(pm.getPlayer(), msg);
             }

@@ -1,5 +1,5 @@
 name: DeathMessages
-version: 1.2.4-colorfix
+version: 1.3.3-colorfix
 main: net.joshb.deathmessages.DeathMessages
 api-version: 1.13
 softdepend:

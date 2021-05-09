@@ -5,6 +5,7 @@ import github.scarsz.discordsrv.dependencies.jda.api.entities.Guild;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.MessageEmbed;
 import github.scarsz.discordsrv.dependencies.jda.api.entities.TextChannel;
 import github.scarsz.discordsrv.util.DiscordUtil;
+import net.joshb.deathmessages.DeathMessages;
 import net.joshb.deathmessages.api.PlayerManager;
 import net.joshb.deathmessages.assets.Assets;
 import net.joshb.deathmessages.config.Messages;
@@ -16,9 +17,9 @@ import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Tameable;
 
 import java.awt.*;
-import java.lang.reflect.Field;
 import java.time.Instant;
-import java.util.Objects;
+import java.util.List;
+import java.util.logging.Level;
 
 public class DiscordSRVExtension {
 
@@ -28,66 +29,109 @@ public class DiscordSRVExtension {
 
 
     public void sendDiscordMessage(PlayerManager pm, MessageType messageType, String message){
-        String channelID = DiscordAssets.getInstance().getChannelID(messageType);
-        if(DiscordAssets.getInstance().getChannelID(messageType).equals("0")) return;
-        Guild g = DiscordUtil.getJda().getGuilds().get(0);
-        TextChannel textChannel = g.getTextChannelById(channelID);
-        if(textChannel == null) return;
-        if(getMessages().getBoolean("Discord.DeathMessage.Remove-Plugin-Prefix")){
-            String prefix = Assets.colorize(getMessages().getString("Prefix"));
-            prefix = ChatColor.stripColor(prefix);
-            prefix = prefix.replaceAll("[\\[\\](){}]","");
-            message = message.replaceAll(prefix, "");
-        }
-        if(getMessages().getString("Discord.DeathMessage.Text").equalsIgnoreCase("")){
-            textChannel.sendMessage(deathMessageToDiscordMessage(pm, message)).queue();
-        } else {
+        List<String> channels = DiscordAssets.getInstance().getIDs(messageType);
+        for (String groups : channels) {
+            if (!groups.contains(":"))
+                continue;
+
+            String[] groupSplit = groups.split(":");
+            String guildID = groupSplit[0];
+            String channelID = groupSplit[1];
+            if (DiscordUtil.getJda().getGuildById(guildID) == null) {
+                DeathMessages.plugin.getLogger().log(Level.SEVERE,
+                        "Could not find the discord guild with ID: " + guildID);
+                continue;
+            }
+
+            Guild g = DiscordUtil.getJda().getGuildById(guildID);
+            if (g.getTextChannelById(channelID) == null) {
+                DeathMessages.plugin.getLogger().log(Level.SEVERE,
+                        "Could not find the discord text channel with ID: " + channelID + " in guild: " + g.getName());
+                continue;
+            }
+
+            TextChannel textChannel = g.getTextChannelById(channelID);
+            if (getMessages().getBoolean("Discord.DeathMessage.Remove-Plugin-Prefix")) {
+                String prefix = Assets.colorize(getMessages().getString("Prefix"));
+                prefix = ChatColor.stripColor(prefix);
+                prefix = prefix.replaceAll("[\\[\\](){}]", "");
+                message = message.replaceAll(prefix, "");
+            }
+
+            if (getMessages().getString("Discord.DeathMessage.Text").equalsIgnoreCase("")) {
+                textChannel.sendMessage(deathMessageToDiscordMessage(pm, message)).queue();
+                continue;
+            }
+
             String[] spl = getMessages().getString("Discord.DeathMessage.Text").split("\\\\n");
             StringBuilder sb = new StringBuilder();
-            for(String s : spl){
+            for (String s : spl)
                 sb.append(s).append("\n");
+
+            if (pm.getLastEntityDamager() instanceof org.bukkit.entity.FallingBlock) {
+                textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm, null)
+                        .replaceAll("%message%", message)).queue();
+                continue;
             }
-            if (pm.getLastEntityDamager() instanceof FallingBlock) {
-                textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm,
-                        null).replaceAll("%message%", message)).queue();
-            } else {
-                textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm,
-                        (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message)).queue();
-            }
+
+            textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm, (LivingEntity)pm
+                    .getLastEntityDamager()).replaceAll("%message%", message)).queue();
         }
     }
 
     public void sendTameableDiscordMessage(PlayerManager pm, MessageType messageType, String message, Tameable tameable){
-        String channelID = DiscordAssets.getInstance().getChannelID(messageType);
-        if(DiscordAssets.getInstance().getChannelID(messageType).equals("0")) return;
-        Guild g = DiscordUtil.getJda().getGuilds().get(0);
-        TextChannel textChannel = g.getTextChannelById(channelID);
-        if(textChannel == null) return;
-        if(getMessages().getBoolean("Discord.DeathMessage.Remove-Plugin-Prefix")){
-            String prefix = Assets.colorize(getMessages().getString("Prefix"));
-            prefix = ChatColor.stripColor(prefix);
-            prefix = prefix.replaceAll("[\\[\\](){}]","");
-            message = message.replaceAll(prefix, "");
-        }
-        if(getMessages().getString("Discord.DeathMessage.Text").equalsIgnoreCase("")){
-            textChannel.sendMessage(deathMessageToDiscordMessage(pm, message, tameable)).queue();
-        } else {
+        List<String> channels = DiscordAssets.getInstance().getIDs(messageType);
+        for (String groups : channels) {
+            if (!groups.contains(":"))
+                continue;
+
+            String[] groupSplit = groups.split(":");
+            String guildID = groupSplit[0];
+            String channelID = groupSplit[1];
+            if (DiscordUtil.getJda().getGuildById(guildID) == null) {
+                DeathMessages.plugin.getLogger().log(Level.SEVERE,
+                        "Could not find the discord guild with ID: " + guildID);
+                continue;
+            }
+
+            Guild g = DiscordUtil.getJda().getGuildById(guildID);
+            if (g.getTextChannelById(channelID) == null) {
+                DeathMessages.plugin.getLogger().log(Level.SEVERE,
+                        "Could not find the discord text channel with ID: " + channelID + " in guild: " + g.getName());
+                continue;
+            }
+
+            TextChannel textChannel = g.getTextChannelById(channelID);
+            if (getMessages().getBoolean("Discord.DeathMessage.Remove-Plugin-Prefix")) {
+                String prefix = Assets.colorize(getMessages().getString("Prefix"));
+                prefix = ChatColor.stripColor(prefix);
+                prefix = prefix.replaceAll("[\\[\\](){}]", "");
+                message = message.replaceAll(prefix, "");
+            }
+
+            if (getMessages().getString("Discord.DeathMessage.Text").equalsIgnoreCase("")) {
+                textChannel.sendMessage(deathMessageToDiscordMessage(pm, message, tameable)).queue();
+                continue;
+            }
+
             String[] spl = getMessages().getString("Discord.DeathMessage.Text").split("\\\\n");
             StringBuilder sb = new StringBuilder();
-            for(String s : spl){
+            for (String s : spl)
                 sb.append(s).append("\n");
+
+            if (pm.getLastEntityDamager() instanceof org.bukkit.entity.FallingBlock) {
+                textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm, null)
+                        .replaceAll("%message%", message)).queue();
+                continue;
             }
-            if (pm.getLastEntityDamager() instanceof FallingBlock) {
-                textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm,
-                        null).replaceAll("%message%", message)).queue();
-            } else {
-                textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm,
-                        (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message)).queue();
-            }
+
+            textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm, (LivingEntity)pm
+                    .getLastEntityDamager()).replaceAll("%message%", message)).queue();
         }
     }
 
     public MessageEmbed deathMessageToDiscordMessage(PlayerManager pm, String message) {
+        String title;
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(getDeathMessageColor());
 
@@ -96,6 +140,7 @@ public class DiscordSRVExtension {
                 pm.getUUID().toString()).replaceAll("%username%", pm.getName());
         String iconURL = getMessages().getString("Discord.DeathMessage.Author.Icon-URL").replaceAll("%uuid%",
                 pm.getUUID().toString()).replaceAll("%username%", pm.getName());
+
         if(!url.startsWith("http") && iconURL.startsWith("http")){
             eb.setAuthor(name, null, iconURL);
         } else if(url.startsWith("http") && !iconURL.startsWith("http")){
@@ -112,29 +157,38 @@ public class DiscordSRVExtension {
             eb.setThumbnail(getMessages().getString("Discord.DeathMessage.Image").replaceAll("%uuid%",
                     pm.getUUID().toString()).replaceAll("%username%", pm.getName()));
         }
-        String title = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Title"), pm,
-                (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message);
-        if(!title.equalsIgnoreCase("")){
+
+        if (pm.getLastEntityDamager() instanceof LivingEntity) {
+            title = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Title"), pm, (LivingEntity)pm.getLastEntityDamager()).replaceAll("%message%", message);
+        } else {
+            title = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Title"), pm, null).replaceAll("%message%", message);
+        }
+        if (!title.equalsIgnoreCase("")) {
             eb.setTitle(title);
         }
+
         String description = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Description"), pm,
                 (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message);
         if(!description.equalsIgnoreCase("")){
             eb.setDescription(description);
         }
+
         String footerText = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Footer.Text"), pm,
                 (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message);
         String footerIcon = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Footer.Icon-URL"), pm,
                 (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message).replaceAll("%uuid%", pm.getUUID().toString());
+
         if(!footerText.equalsIgnoreCase("") && footerIcon.startsWith("http")){
             eb.setFooter(footerText, footerIcon);
         } else if(!footerText.equalsIgnoreCase("") && !footerIcon.startsWith("http")){
             eb.setFooter(footerText);
         }
+
         boolean timeStamp = getMessages().getBoolean("Discord.DeathMessage.Timestamp");
         if(timeStamp){
             eb.setTimestamp(Instant.now());
         }
+
         for (String s : getMessages().getStringList("Discord.DeathMessage.Content")) {
             String[] conSpl = s.split("\\|");
             if (s.startsWith("break")) {
@@ -161,6 +215,7 @@ public class DiscordSRVExtension {
                 pm.getUUID().toString()).replaceAll("%username%", pm.getName());
         String iconURL = getMessages().getString("Discord.DeathMessage.Author.Icon-URL").replaceAll("%uuid%",
                 pm.getUUID().toString()).replaceAll("%username%", pm.getName());
+
         if(!url.startsWith("http") && iconURL.startsWith("http")){
             eb.setAuthor(name, null, iconURL);
         } else if(url.startsWith("http") && !iconURL.startsWith("http")){
@@ -177,29 +232,35 @@ public class DiscordSRVExtension {
             eb.setThumbnail(getMessages().getString("Discord.DeathMessage.Image").replaceAll("%uuid%",
                     pm.getUUID().toString()).replaceAll("%username%", pm.getName()));
         }
+
         String title = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Title"), pm,
                 (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message);
         if(!title.equalsIgnoreCase("")){
             eb.setTitle(title);
         }
+
         String description = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Description"), pm,
                 (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message);
         if(!description.equalsIgnoreCase("")){
             eb.setDescription(description);
         }
+
         String footerText = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Footer.Text"), pm,
                 (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message);
         String footerIcon = Assets.playerDeathPlaceholders(getMessages().getString("Discord.DeathMessage.Footer.Icon-URL"), pm,
                 (LivingEntity) pm.getLastEntityDamager()).replaceAll("%message%", message).replaceAll("%uuid%", pm.getUUID().toString());
+
         if(!footerText.equalsIgnoreCase("") && footerIcon.startsWith("http")){
             eb.setFooter(footerText, footerIcon);
         } else if(!footerText.equalsIgnoreCase("") && !footerIcon.startsWith("http")){
             eb.setFooter(footerText);
         }
+
         boolean timeStamp = getMessages().getBoolean("Discord.DeathMessage.Timestamp");
         if(timeStamp){
             eb.setTimestamp(Instant.now());
         }
+
         for (String s : getMessages().getStringList("Discord.DeathMessage.Content")) {
             String[] conSpl = s.split("\\|");
             if (s.startsWith("break")) {
