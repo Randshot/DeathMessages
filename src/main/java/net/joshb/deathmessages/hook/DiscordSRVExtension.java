@@ -18,6 +18,7 @@ import org.bukkit.entity.Tameable;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.time.Instant;
+import java.util.Objects;
 
 public class DiscordSRVExtension {
 
@@ -44,7 +45,7 @@ public class DiscordSRVExtension {
             String[] spl = getMessages().getString("Discord.DeathMessage.Text").split("\\\\n");
             StringBuilder sb = new StringBuilder();
             for(String s : spl){
-                sb.append(s + "\n");
+                sb.append(s).append("\n");
             }
             if (pm.getLastEntityDamager() instanceof FallingBlock) {
                 textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm,
@@ -74,7 +75,7 @@ public class DiscordSRVExtension {
             String[] spl = getMessages().getString("Discord.DeathMessage.Text").split("\\\\n");
             StringBuilder sb = new StringBuilder();
             for(String s : spl){
-                sb.append(s + "\n");
+                sb.append(s).append("\n");
             }
             if (pm.getLastEntityDamager() instanceof FallingBlock) {
                 textChannel.sendMessage(Assets.playerDeathPlaceholders(sb.toString(), pm,
@@ -88,14 +89,8 @@ public class DiscordSRVExtension {
 
     public MessageEmbed deathMessageToDiscordMessage(PlayerManager pm, String message) {
         EmbedBuilder eb = new EmbedBuilder();
-        Color color;
-        try {
-            Field field = Class.forName("java.awt.Color").getField(getMessages().getString("Discord.DeathMessage.Color"));
-            color = (Color) field.get(null);
-        } catch (Exception e) {
-            color = null;
-        }
-        eb.setColor(color);
+        eb.setColor(getDeathMessageColor());
+
         String name = getMessages().getString("Discord.DeathMessage.Author.Name").replaceAll("%message%", message);
         String url = getMessages().getString("Discord.DeathMessage.Author.URL").replaceAll("%uuid%",
                 pm.getUUID().toString()).replaceAll("%username%", pm.getName());
@@ -107,10 +102,10 @@ public class DiscordSRVExtension {
             eb.setAuthor(name, url);
         } else if(!url.startsWith("http") && !iconURL.startsWith("http")){
             eb.setAuthor(name);
-        } else if(name.equalsIgnoreCase("")){
-
         } else {
-            eb.setAuthor(name, url, iconURL);
+            if (!name.equalsIgnoreCase("")) {
+                eb.setAuthor(name, url, iconURL);
+            }
         }
 
         if(getMessages().getString("Discord.DeathMessage.Image").startsWith("http")){
@@ -159,14 +154,8 @@ public class DiscordSRVExtension {
 
     public MessageEmbed deathMessageToDiscordMessage(PlayerManager pm, String message, Tameable tameable) {
         EmbedBuilder eb = new EmbedBuilder();
-        Color color;
-        try {
-            Field field = Class.forName("java.awt.Color").getField(getMessages().getString("Discord.DeathMessage.Color"));
-            color = (Color) field.get(null);
-        } catch (Exception e) {
-            color = null;
-        }
-        eb.setColor(color);
+        eb.setColor(getDeathMessageColor());
+
         String name = getMessages().getString("Discord.DeathMessage.Author.Name").replaceAll("%message%", message);
         String url = getMessages().getString("Discord.DeathMessage.Author.URL").replaceAll("%uuid%",
                 pm.getUUID().toString()).replaceAll("%username%", pm.getName());
@@ -178,10 +167,10 @@ public class DiscordSRVExtension {
             eb.setAuthor(name, url);
         } else if(!url.startsWith("http") && !iconURL.startsWith("http")){
             eb.setAuthor(name);
-        } else if(name.equalsIgnoreCase("")){
-
         } else {
-            eb.setAuthor(name, url, iconURL);
+            if (!name.equalsIgnoreCase("")) {
+                eb.setAuthor(name, url, iconURL);
+            }
         }
 
         if(getMessages().getString("Discord.DeathMessage.Image").startsWith("http")){
@@ -230,5 +219,33 @@ public class DiscordSRVExtension {
 
     private FileConfiguration getMessages() {
         return Messages.getInstance().getConfig();
+    }
+
+    private int getDeathMessageColor() {
+        final int fallbackColor = org.bukkit.Color.BLACK.asRGB();
+        if (!getMessages().contains("Discord.DeathMessage.Color")) {
+            return fallbackColor;
+        }
+
+        try {
+            if (getMessages().isColor("Discord.DeathMessage.Color")) {
+                return getMessages().getColor("Discord.DeathMessage.Color").asRGB();
+            }
+
+            if (getMessages().isString("Discord.DeathMessage.Color")) {
+                String colorString = getMessages().getString("Discord.DeathMessage.Color");
+                try {
+                    return Color.decode(colorString).getRGB();
+                } catch (Exception ignored) {
+                    org.bukkit.Color c = (org.bukkit.Color) Class.forName("org.bukkit.Color").getField(colorString).get(null);
+                    return c.asRGB();
+                }
+            }
+
+            return getMessages().getInt("Discord.DeathMessage.Color", fallbackColor);
+        } catch (Exception ignored) {
+        }
+
+        return fallbackColor;
     }
 }
